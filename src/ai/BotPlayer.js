@@ -22,6 +22,7 @@ function BotPlayer() {
 
     this.ejectMass = 0; // Amount of times to eject mass
     this.oldPos = {x: 0, y:0};
+    this.isBot=true;
 }
 
 module.exports = BotPlayer;
@@ -59,6 +60,14 @@ BotPlayer.prototype.updateSightRange = function() { // For view distance
 };
 
 BotPlayer.prototype.update = function() { // Overrides the update function from player tracker
+	
+	this.isBot=true;
+		if(this.isBot)
+	{
+		this.color.r = 100;
+    this.color.b = 100;
+    this.color.g = 100;
+}
     // Remove nodes from visible nodes if possible
     for (var i = 0; i < this.nodeDestroyQueue.length; i++) {
         var index = this.visibleNodes.indexOf(this.nodeDestroyQueue[i]);
@@ -114,27 +123,38 @@ BotPlayer.prototype.update = function() { // Overrides the update function from 
                 }
 
                 // Check for danger
-                if (cell.mass > (check.mass * 1.25)) {
+                if (cell.mass > (check.mass * 1.25) && !(check.owner.isBot)) {
                     // Add to prey list
                     this.prey.push(check);
-                } else if (check.mass > (cell.mass * 1.25)) {
+                } else if (check.mass > (cell.mass * 1.25 && !(check.owner.isBot))) {
                     // Predator
                     var dist = this.getDist(cell, check) - (r + check.getSize());
-                    if (dist < 300) {
+                    if (dist < 500) {
                         this.predators.push(check);
-                        if ((this.cells.length == 1) && (dist < 0)) {
-                            this.juke = true;
+			this.prey.length = 0;
+                        if ((this.cells.length <= 8) && (dist < 10)) {
+//                            this.juke = true;
                         }
                     }
                     this.threats.push(check);
                 } else {
-                    this.threats.push(check);
+					if(!(check.owner.isBot))
+					{
+                    this.threats.push(check);}
                 }
                 break;
             case 1:
                 this.food.push(check);
                 break;
             case 2: // Virus
+		if (check.mass > (cell.mass * 1.25)) {
+                    // Predator
+                    var dist = this.getDist(cell, check) - (r + check.getSize());
+                    if (dist < 400) {
+                        this.predators.push(check);
+                    }
+                    this.threats.push(check);
+                }
                 this.virus.push(check);
                 break;
             case 3: // Ejected mass
@@ -266,7 +286,7 @@ BotPlayer.prototype.decide = function(cell) {
 
             if (this.juke) {
                 // Juking
-                this.gameServer.splitCells(this);
+//                this.gameServer.splitCells(this);
             }
 
             break;
@@ -281,14 +301,16 @@ BotPlayer.prototype.decide = function(cell) {
 
             var massReq = 1.25 * (this.target.mass * 2 ); // Mass required to splitkill the target
 
-            if ((cell.mass > massReq) && (this.cells.length == 1)) { // Will not split into more than 2 cells
+            if ((cell.mass > massReq)
+ && (this.cells.length <= 8)
+) { // Will not split into more than 2 cells
                 var splitDist = (4 * (cell.getSpeed() * 5)) + (cell.getSize() * 1.75); // Distance needed to splitkill
                 var distToTarget = this.getAccDist(cell,this.target); // Distance between the target and this cell
 
                 if (splitDist >= distToTarget) {
                     if ((this.threats.length > 0) && (this.getBiggest(this.threats).mass > (1.25 * (cell.mass/2)))) {
                         // Dont splitkill when they are cells that can possibly eat you after the split
-                        break;
+//TODO                        break;
                     }
                     // Splitkill
                     this.gameServer.splitCells(this);
@@ -326,7 +348,7 @@ BotPlayer.prototype.decide = function(cell) {
 
                 // Shoot
                 for (var v = 0; v < 7 ;v++) {
-                    this.gameServer.ejectMass(this);
+                    //this.gameServer.ejectMass(this);
                 }
 
                 // Back to starting pos
@@ -356,7 +378,7 @@ BotPlayer.prototype.decide = function(cell) {
         var r = 0;
         // Get amount of cells that can merge
         for (var i in this.cells) {
-            if (this.cells[i].recombineTicks == 0) {
+            if (this.cells[i].recombineTime == 0) {
                 r++;
             }
         }

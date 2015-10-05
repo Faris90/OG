@@ -44,10 +44,21 @@ FFA.prototype.onPlayerSpawn = function(gameServer,player) {
     if (gameServer.nodesEjected.length > 0) {
         var index = Math.floor(Math.random() * 100) + 1;
         if (index <= gameServer.config.ejectSpawnPlayer) {
-            // Get ejected cell
-            var index = Math.floor(Math.random() * gameServer.nodesEjected.length);
-            var e = gameServer.nodesEjected[index];
 
+
+		var e;
+		for (var i in gameServer.nodesEjected)
+		{
+			e = gameServer.nodesEjected[i];
+			
+			if (!e) {
+				continue;
+			}
+			
+			if( e.oww===player.getName().split(" · ")[1])
+			{
+				if(e.adbc>340)
+				{
             // Remove ejected mass
             gameServer.removeNode(e);
 
@@ -60,10 +71,10 @@ FFA.prototype.onPlayerSpawn = function(gameServer,player) {
                 'r': color.r,
                 'g': color.g,
                 'b': color.b
-            });
-        }
+            });}}
+		}
     }
-    
+};
     // Spawn player
     gameServer.spawnPlayer(player,pos,startMass);
 }
@@ -86,7 +97,7 @@ FFA.prototype.updateLB = function(gameServer) {
             // Initial player
             lb.push(player);
             continue;
-        } else if (lb.length < 10) {
+        } else if (lb.length < 30) {
             this.leaderboardAddSort(player,lb);
         } else {
             // 10 in leaderboard already

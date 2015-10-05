@@ -65,12 +65,12 @@ PacketHandler.prototype.handleMessage = function(message) {
             break;
         case 16:
             // Set Target
-            if (view.byteLength == 13) {
+            // Discard broken packets
+if (view.byteLength == 13) {
                 var client = this.socket.playerTracker;
                 client.mouse.x = view.getInt32(1, true);
                 client.mouse.y = view.getInt32(5, true);
-            }
-            break;
+             }            break;
         case 17:
             // Space Press - Split cell
             this.pressSpace = true;

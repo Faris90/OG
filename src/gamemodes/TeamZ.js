@@ -390,7 +390,7 @@ TeamZ.prototype.onServerInit = function (gameServer) {
         if (this.gameMode.state != GameState.IN_PROGRESS)
             return list;
 
-        var squareR = cell.getSquareSize(); // Get cell squared radius
+	var squareR = cell.getSquareSize(); // Get cell squared radius
         
         // Loop through all cells that are visible to the cell. There is probably a more efficient way of doing this but whatever
         var len = cell.owner.visibleNodes.length;
@@ -430,7 +430,7 @@ TeamZ.prototype.onServerInit = function (gameServer) {
             }
             
             // AABB Collision
-            if (!check.collisionCheck2(squareR, cell.position)) {
+if (!check.collisionCheck2(squareR, cell.position)) {
                 continue;
             }
             
@@ -907,7 +907,7 @@ TeamZ.prototype.onCellMove = function (x1, y1, cell) {
         if (check.owner.getTeam() == 0 || team == 0) {
             // Check if in collision range
             var collisionDist = check.getSize() + r; // Minimum distance between the 2 cells
-            if (!cell.simpleCollide(x1, y1, check, collisionDist)) {
+            if (cell.simpleCollide(check, collisionDist)) {
                 // Skip
                 continue;
             }

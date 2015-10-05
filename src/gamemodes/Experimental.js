@@ -2,8 +2,10 @@ var FFA = require('./FFA'); // Base gamemode
 var Cell = require('../entity/Cell');
 var Food = require('../entity/Food');
 var Virus = require('../entity/Virus');
+var VirusHC = require('../entity/VirusHC');
+var Powerup = require('../entity/Powerup');
 var VirusFeed = require('../entity/Virus').prototype.feed;
-
+var FFA = require('../gamemodes/FFA');
 function Experimental() {
     FFA.apply(this, Array.prototype.slice.call(arguments));
 
@@ -18,14 +20,55 @@ function Experimental() {
     
     // Config
     this.motherCellMass = 200;
-    this.motherUpdateInterval = 5; // How many ticks it takes to update the mother cell (1 tick = 50 ms)
-    this.motherSpawnInterval = 100; // How many ticks it takes to spawn another mother cell - Currently 5 seconds
-    this.motherMinAmount = 5;
+    this.motherUpdateInterval = 2; // How many ticks it takes to update the mother cell (1 tick = 50 ms)
+    this.motherSpawnInterval = 70; // How many ticks it takes to spawn another mother cell - Currently 5 seconds
+    this.motherMinAmount = 15;
+    this.winner="OOOO0000OOOO";
+    this.winTicks=0;
 }
 
 module.exports = Experimental;
 Experimental.prototype = new FFA();
+Experimental.prototype.onCellMove = function(x1,y1,cell) {
+    var team = cell.owner.isBot;
+    var r = cell.getSize();
 
+    // Find team
+    for (var i = 0; i < cell.owner.visibleNodes.length;i++) {
+        // Only collide with player cells
+        var check = cell.owner.visibleNodes[i];
+
+        if ((check.getType() != 0) || (cell.owner == check.owner)){
+            continue;
+        }
+
+        // Collision with teammates
+        if (check.owner.isBot && cell.owner.isBot && (!(check.owner.getName().split(" · ")[1]==="HAXY") && !(cell.owner.getName().split(" · ")[1]==="HAXY") )) {
+            // Check if in collision range
+            var collisionDist = check.getSize() + r; // Minimum distance between the 2 cells
+            if (cell.simpleCollide(check, collisionDist)) {
+                // Skip
+                continue;
+            }
+
+            // First collision check passed... now more precise checking
+            dist = cell.getDist(cell.position.x,cell.position.y,check.position.x,check.position.y);
+
+            // Calculations
+            if (dist < collisionDist) { // Collided
+                // The moving cell pushes the colliding cell
+                var newDeltaY = check.position.y - y1;
+                var newDeltaX = check.position.x - x1;
+                var newAngle = Math.atan2(newDeltaX,newDeltaY);
+
+                var move = collisionDist - dist;
+
+                check.position.x = check.position.x + ( move * Math.sin(newAngle) ) >> 0;
+                check.position.y = check.position.y + ( move * Math.cos(newAngle) ) >> 0;
+            }
+        }
+    }
+};
 // Gamemode Specific Functions
 
 Experimental.prototype.updateMotherCells = function(gameServer) {
@@ -78,8 +121,25 @@ Experimental.prototype.spawnMotherCell = function(gameServer) {
         }
 
         // Spawn if no cells are colliding
+if(Math.random()<0.1)
+{
+        var m = new VirusHC(gameServer.getNextNodeId(), null, pos, this.motherCellMass);
+        gameServer.addNode(m); 
+
+}else{
+if(Math.random()>0.95)
+{
+}else
+if(Math.random()<0.7)
+{
         var m = new MotherCell(gameServer.getNextNodeId(), null, pos, this.motherCellMass);
         gameServer.addNode(m); 
+}else
+{
+        var m = new Powerup(gameServer.getNextNodeId(), null, pos, 100);
+        gameServer.addNode(m); 
+
+}}
     }
 };
 
@@ -91,23 +151,134 @@ Experimental.prototype.onServerInit = function(gameServer) {
     
     // Special virus mechanics
     Virus.prototype.feed = function(feeder,gameServer) {
+if(this.hc == 1)
+{
+}else
+{
         gameServer.removeNode(feeder);
         // Pushes the virus
         this.setAngle(feeder.getAngle()); // Set direction if the virus explodes
-        this.moveEngineTicks = 5; // Amount of times to loop the movement function
-        this.moveEngineSpeed = 30;
+        this.moveEngineTicks = 9; // Amount of times to loop the movement function
+        this.moveEngineSpeed = 60;
+	this.mass += 20;
         
         var index = gameServer.movingNodes.indexOf(this);
         if (index == -1) {
             gameServer.movingNodes.push(this);
-        }
+        }}
     };
 
     // Override this
     gameServer.getRandomSpawn = gameServer.getRandomPosition;
 };
 
+
 Experimental.prototype.onTick = function(gameServer) {
+
+if(!(this.winner==="OOOO0000OOOO"))
+{
+this.winTicks++;
+        var newLB = [];
+        newLB[0] = "Congratulations";
+        newLB[1] = "to";
+        newLB[2] = this.winner;
+        newLB[3] = "for winning";
+        newLB[4] = "----------------------------";
+        newLB[5] = "Gamemode by";
+        newLB[6] = "/u/_kcx";
+
+        // Clears the update leaderboard function and replaces it with our own
+        gameServer.gameMode.packetLB = 48;
+        gameServer.gameMode.specByLeaderboard = false;
+        gameServer.gameMode.updateLB = function(gameServer) {gameServer.leaderboard = newLB}; 
+}
+
+if(this.winTicks>100)
+{
+
+        // Gets the current gamemode
+        
+        
+        // Replace functions
+        gameServer.gameMode.packetLB = 49;
+        gameServer.gameMode.updateLB = FFA.prototype.updateLB; 
+
+
+for(var i=0;i<1000;i++)
+{
+    var node;
+    for (var i in gameServer.nodes)
+    {
+        node = gameServer.nodes[i];
+		
+     //   if (!node) {
+       //     continue;
+//        }
+        gameServer.removeNode(node);
+    }}
+    this.winTicks=0;
+this.winner="OOOO0000OOOO";
+}
+	var e;
+		for (var i in gameServer.nodesEjected)
+		{
+			e = gameServer.nodesEjected[i];
+			
+			if (!e) {
+				continue;
+			}
+			e.update();
+		}
+    var nodep;
+    for (var i in gameServer.nodesPlayer)
+    {
+        nodep = gameServer.nodesPlayer[i];
+		
+        if (!nodep) {
+            continue;
+        }
+        if(nodep.owner.getName().split(" · ")[1]==="HAXY")
+        {
+			nodep.rainb();
+		}
+	if(nodep.owner.getScore(true) > 25000)
+        {
+if(this.winner==="OOOO0000OOOO")
+{
+		this.winner = nodep.getName();}
+        }
+    }
+
+
+    var node;
+    // Change color
+    for (var i in gameServer.nodes) {
+        node = gameServer.nodes[i];
+		
+        if (!node) {
+            continue;
+        }
+		if(node.mass<1)
+{
+    gameServer.removeNode(node);
+}
+
+if(node.decayMass>0)
+{
+        node.rainb();
+    }
+
+if(node.namee=="Powerup > MAX!!!")
+{
+        node.rainb();
+    }
+
+if(node.hc==1)
+{
+        node.decayy(gameServer);
+    }
+
+}
     // Mother Cell updates
     if (this.tickMother >= this.motherUpdateInterval) {
     	this.updateMotherCells(gameServer);
@@ -153,19 +324,25 @@ MotherCell.prototype.getEatingRange = function() {
 
 MotherCell.prototype.update = function(gameServer) {
     // Add mass
-    this.mass += .25;
-	
+	if(this.mass>gameServer.gameMode.motherCellMass)
+{
+    this.mass-=15;
+}
+if(this.mass>7000)
+{
+	this.mass=7000;
+}
     // Spawn food
     var maxFood = 10; // Max food spawned per tick
     var i = 0; // Food spawn counter
     while ((this.mass > gameServer.gameMode.motherCellMass) && (i < maxFood))  {
         // Only spawn if food cap hasn been reached
-        if (gameServer.currentFood < gameServer.config.foodMaxAmount) {
+//        if (gameServer.currentFood < gameServer.config.foodMaxAmount) {
             this.spawnFood(gameServer);
-        }
+
+  //      }
         
         // Incrementers
-        this.mass--;
         i++;
     }
 }
@@ -194,7 +371,7 @@ MotherCell.prototype.checkEat = function(gameServer) {
             if (r > dist) {
                 // Eats the cell
                 gameServer.removeNode(check);
-                this.mass += check.mass;
+                this.mass += check.mass*2;
             }
         }
     }
@@ -257,6 +434,7 @@ MotherCell.prototype.onRemove = function(gameServer) {
     	gameServer.gameMode.nodesMother.splice(index,1);
     }
 };
+
 
 MotherCell.prototype.visibleCheck = function(box,centerPos) {
     // Checks if this cell is visible to the player

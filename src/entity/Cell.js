@@ -13,18 +13,72 @@ function Cell(nodeId, owner, position, mass, gameServer) {
     this.moveEngineTicks = 0; // Amount of times to loop the movement function
     this.moveEngineSpeed = 0;
     this.moveDecay = .75;
+    this.decayMass = 0;
     this.angle = 0; // Angle of movement
+this.namee="";
+this.nameee="";
+this.ownerr = "";
+this.hc=0;
+this.decayMass=0;
+  this.colors = [
+        {'r':255, 'g':  0, 'b':  0}, // Red
+        {'r':255, 'g': 32, 'b':  0},
+        {'r':255, 'g': 64, 'b':  0},
+        {'r':255, 'g': 96, 'b':  0},
+        {'r':255, 'g':128, 'b':  0}, // Orange
+        {'r':255, 'g':160, 'b':  0},
+        {'r':255, 'g':192, 'b':  0},
+        {'r':255, 'g':224, 'b':  0},
+        {'r':255, 'g':255, 'b':  0}, // Yellow
+        {'r':192, 'g':255, 'b':  0},
+        {'r':128, 'g':255, 'b':  0},
+        {'r': 64, 'g':255, 'b':  0},
+        {'r':  0, 'g':255, 'b':  0}, // Green
+        {'r':  0, 'g':192, 'b': 64},
+        {'r':  0, 'g':128, 'b':128},
+        {'r':  0, 'g': 64, 'b':192},
+        {'r':  0, 'g':  0, 'b':255}, // Blue
+        {'r': 18, 'g':  0, 'b':192},
+        {'r': 37, 'g':  0, 'b':128},
+        {'r': 56, 'g':  0, 'b': 64},
+        {'r': 75, 'g':  0, 'b':130}, // Indigo
+        {'r': 92, 'g':  0, 'b':161},
+        {'r':109, 'g':  0, 'b':192},
+        {'r':126, 'g':  0, 'b':223},
+        {'r':143, 'g':  0, 'b':255}, // Purple
+        {'r':171, 'g':  0, 'b':192},
+        {'r':199, 'g':  0, 'b':128},
+        {'r':227, 'g':  0, 'b': 64},
+        {'r':240, 'g':  0, 'b': 32},
+        {'r':255, 'g':  0, 'b': 0},       
+    ];
+    this.colorsLength = this.colors.length -1;
+    this.speedd = 3; // Speed of color change
 }
 
 module.exports = Cell;
 
 // Fields not defined by the constructor are considered private and need a getter/setter to access from a different class
 
+Cell.prototype.rainb = function() {
+    if (typeof this.rainbow == 'undefined') {
+        this.rainbow = Math.floor(Math.random() * this.colors.length);
+    } 
+	
+    if (this.rainbow >= this.colorsLength) {
+        this.rainbow = 0;
+    }
+	
+    this.color = this.colors[this.rainbow];
+    this.rainbow += this.speedd;
+
+
+};
 Cell.prototype.getName = function() {
 if (this.owner) {
         return this.owner.name;
     } else {
-        return "";
+        return this.namee;
     }
 };
 
@@ -45,11 +99,6 @@ Cell.prototype.getType = function() {
 Cell.prototype.getSize = function() {
     // Calculates radius based on cell mass
     return Math.ceil(Math.sqrt(100 * this.mass));
-};
-
-Cell.prototype.getSquareSize = function () {
-    // R * R
-    return (100 * this.mass) >> 0;
 };
 
 Cell.prototype.addMass = function(n) {
@@ -117,18 +166,6 @@ Cell.prototype.collisionCheck = function(bottomY,topY,rightX,leftX) {
     return true;
 };
 
-// This collision checking function is based on CIRCLE shape
-Cell.prototype.collisionCheck2 = function (objectSquareSize, objectPosition) {
-    // IF (O1O2 + r <= R) THEN collided. (O1O2: distance b/w 2 centers of cells)
-    // (O1O2 + r)^2 <= R^2
-    // approximately, remove 2*O1O2*r because it requires sqrt(): O1O2^2 + r^2 <= R^2
-
-    var dx = this.position.x - objectPosition.x;
-    var dy = this.position.y - objectPosition.y;
-
-    return (dx * dx + dy * dy + this.getSquareSize() <= objectSquareSize);
-};
-
 Cell.prototype.visibleCheck = function(box,centerPos) {
     // Checks if this cell is visible to the player
     return this.collisionCheck(box.bottomY,box.topY,box.rightX,box.leftX);
@@ -147,22 +184,22 @@ Cell.prototype.calcMovePhys = function(config) {
     var radius = 40;
     if ((this.position.x - radius) < config.borderLeft) {
         // Flip angle horizontally - Left side
-        this.angle = 6.28 - this.angle;
+        this.angle = Math.abs(3.14 - this.angle);
         X = config.borderLeft + radius;
     }
     if ((this.position.x + radius) > config.borderRight) {
         // Flip angle horizontally - Right side
-        this.angle = 6.28 - this.angle;
+        this.angle = 1 - this.angle;
         X = config.borderRight - radius;
     }
     if ((this.position.y - radius) < config.borderTop) {
         // Flip angle vertically - Top side
-        this.angle = (this.angle <= 3.14) ? 3.14 - this.angle : 9.42 - this.angle;
+        this.angle = Math.abs(this.angle - 3.14);
         Y = config.borderTop + radius;
     }
     if ((this.position.y + radius) > config.borderBottom) {
         // Flip angle vertically - Bottom side
-        this.angle = (this.angle <= 3.14) ? 3.14 - this.angle : 9.42 - this.angle;
+        this.angle = Math.abs(this.angle - 3.14);
         Y = config.borderBottom - radius;
     }
 
@@ -196,5 +233,21 @@ Cell.prototype.onAutoMove = function(gameServer) {
 
 Cell.prototype.moveDone = function(gameServer) {
     // Called when this cell finished moving with the auto move engine
+};
+Cell.prototype.getSquareSize = function () {
+    // R * R
+    return (100 * this.mass) >> 0;
+};
+
+
+Cell.prototype.collisionCheck2 = function (objectSquareSize, objectPosition) {
+    // IF (O1O2 + r <= R) THEN collided. (O1O2: distance b/w 2 centers of cells)
+    // (O1O2 + r)^2 <= R^2
+    // approximately, remove 2*O1O2*r because it requires sqrt(): O1O2^2 + r^2 <= R^2
+
+    var dx = this.position.x - objectPosition.x;
+    var dy = this.position.y - objectPosition.y;
+
+    return (dx * dx + dy * dy + this.getSquareSize() <= objectSquareSize);
 };
 

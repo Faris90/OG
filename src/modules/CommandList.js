@@ -26,30 +26,6 @@ var fillChar = function (data, char, fieldLength, rTL) {
 // Commands
 
 Commands.list = {
-    help: function(gameServer,split) {
-        console.log("[Console] ======================== HELP ======================");
-        console.log("[Console] addbot     : add bot to the server");
-        console.log("[Console] board      : set scoreboard text");
-        console.log("[Console] boardreset : reset scoreboard text");
-        console.log("[Console] change     : change specified settings");
-        console.log("[Console] clear      : clear console output");
-        console.log("[Console] color      : set cell(s) color by client ID");
-        console.log("[Console] exit       : stop the server");
-        console.log("[Console] food       : spawn food at specified Location");
-        console.log("[Console] gamemode   : change server gamemode");
-        console.log("[Console] kick       : kick player or bot by client ID");
-        console.log("[Console] kill       : kill cell(s) by client ID");
-        console.log("[Console] killall    : kill everyone");
-        console.log("[Console] mass       : set cell(s) mass by client ID");
-        console.log("[Console] name       : change cell(s) name by client ID");
-        console.log("[Console] playerlist : get list of players and bots");
-        console.log("[Console] pause      : pause game , freeze all cells");
-        console.log("[Console] reload     : reload config");
-        console.log("[Console] status     : get server status");
-        console.log("[Console] tp         : teleport player to specified location");
-        console.log("[Console] virus      : spawn virus at a specified Location");
-        console.log("[Console] ====================================================");
-    },
     addbot: function(gameServer,split) {
         var add = parseInt(split[1]);
         if (isNaN(add)) {
@@ -166,26 +142,6 @@ Commands.list = {
             console.log("[Console] Invalid game mode selected");
         }
     },
-    kick: function(gameServer,split) {
-        var id = parseInt(split[1]);
-        if (isNaN(id)) {
-            console.log("[Console] Please specify a valid player ID!");
-            return;
-        }
-        
-        for (var i in gameServer.clients) {
-            if (gameServer.clients[i].playerTracker.pID == id) {
-                var client = gameServer.clients[i].playerTracker;
-                var len = client.cells.length;
-                for (var j = 0; j < len; j++) {
-                    gameServer.removeNode(client.cells[0]);
-                }
-                client.socket.close();
-                console.log("[Console] Kicked " + client.name);
-                break;
-            }
-        }
-    },
     kill: function(gameServer,split) {
         var id = parseInt(split[1]);
         if (isNaN(id)) {
@@ -252,7 +208,7 @@ Commands.list = {
             return;
         }
         
-        var name = split.slice(2, split.length).join(' ');
+        var name = split[2];
         if (typeof name == 'undefined') {
             console.log("[Console] Please type a valid name");
             return;
@@ -310,7 +266,7 @@ Commands.list = {
                 nick = fillChar((client.name == "") ? "An unnamed cell" : client.name, ' ', gameServer.config.playerMaxNickLength);
                 cells = fillChar(client.cells.length, ' ', 5, true);
                 score = fillChar(client.getScore(true), ' ', 6, true);
-                position = fillChar(client.centerPos.x >> 0, ' ', 5, true) + ', ' + fillChar(client.centerPos.y >> 0, ' ', 5, true);
+                position = fillChar(client.centerPos.x, ' ', 5, true) + ', ' + fillChar(client.centerPos.y, ' ', 5, true);
                 console.log(" "+id+" | "+ip+" | "+nick+" | "+cells+" | "+score+" | "+position);
             } else { 
                 // No cells = dead player or in-menu

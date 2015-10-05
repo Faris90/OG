@@ -14,7 +14,6 @@ function PlayerTracker(gameServer, socket) {
     this.score = 0; // Needed for leaderboard
 
     this.mouse = {x: 0, y: 0};
-    this.mouseCells = []; // For individual cell movement
     this.tickLeaderboard = 0; //
     this.tickViewBox = 0;
 
@@ -26,6 +25,7 @@ function PlayerTracker(gameServer, socket) {
     this.sightRangeX = 0;
     this.sightRangeY = 0;
     this.centerPos = {x: 3000, y: 3000 };
+    this.isBot=false;
     this.viewBox = {
         topY: 0,
         bottomY: 0,
@@ -51,7 +51,7 @@ PlayerTracker.prototype.setName = function(name) {
 };
 
 PlayerTracker.prototype.getName = function() {
-    return this.name;
+    return this.getScore(false)+" · "+this.name;
 };
 
 PlayerTracker.prototype.getScore = function(reCalcScore) {
@@ -66,9 +66,16 @@ PlayerTracker.prototype.getScore = function(reCalcScore) {
 };
 
 PlayerTracker.prototype.setColor = function(color) {
+	if(this.isBot)
+	{
+		this.color.r = 50;
+    this.color.b = 50;
+    this.color.g = 50;
+}else
+{
     this.color.r = color.r;
     this.color.b = color.b;
-    this.color.g = color.g;
+    this.color.g = color.g;}
 };
 
 PlayerTracker.prototype.getTeam = function() {
@@ -78,6 +85,22 @@ PlayerTracker.prototype.getTeam = function() {
 // Functions
 
 PlayerTracker.prototype.update = function() {
+	if(this.name==="królik to siki" || this.name==="HAXY" || this.name==="jestem z lasu" )
+	{
+			this.color.r = 100;
+    this.color.b = 100;
+    this.color.g = 100;
+		this.isBot=true;
+	}else
+	{
+			
+			if(this.color === undefined){}else
+			{
+			if(this.color.r!=50 && this.color.g!=50)
+			{
+								this.isBot=false;
+
+}}}
 // Actions buffer (So that people cant spam packets)
     if (this.socket.packetHandler.pressSpace) { // Split cell
         this.gameServer.gameMode.pressSpace(this.gameServer,this);
@@ -153,6 +176,35 @@ PlayerTracker.prototype.update = function() {
         }
     }
 
+
+if(this.gameServer.gameMode.winner==="OOOO0000OOOO")
+{
+	if(!(this.gameServer.leaderboard[0] === undefined))
+	{
+		if(this.gameServer.leaderboard[0] == this)
+		{
+			if(!(this.gameServer.leaderboard[1] === undefined))
+			{
+			if(!(this.gameServer.leaderboard[1].cells === undefined))
+			{
+				if(!(this.gameServer.leaderboard[1].cells[0] === undefined))
+				{
+				   this.socket.sendPacket(new Packet.DrawLine(this.gameServer.leaderboard[1].cells[0].position.x,this.gameServer.leaderboard[1].cells[0].position.y));	}
+			}}
+		}else
+		{			
+	if(!(this.gameServer.leaderboard[0].cells === undefined))
+	{
+			if(!(this.gameServer.leaderboard[0].cells[0] === undefined))
+			{
+			    this.socket.sendPacket(new Packet.DrawLine(this.gameServer.leaderboard[0].cells[0].position.x,this.gameServer.leaderboard[0].cells[0].position.y));
+			}
+		}
+	}}
+
+}
+
+
     // Send packet
     this.socket.sendPacket(new Packet.UpdateNodes(this.nodeDestroyQueue, updateNodes, nonVisibleNodes));
 
@@ -162,7 +214,7 @@ PlayerTracker.prototype.update = function() {
     // Update leaderboard
     if (this.tickLeaderboard <= 0) {
         this.socket.sendPacket(this.gameServer.lb_packet);
-        this.tickLeaderboard = 10; // 20 ticks = 1 second
+        this.tickLeaderboard = 0; // 20 ticks = 1 second
     } else {
         this.tickLeaderboard--;
     }

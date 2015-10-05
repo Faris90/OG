@@ -94,18 +94,38 @@ function GameServer() {
 
     // Colors
     this.colors = [
-        {'r':235, 'g': 75, 'b':  0},
-        {'r':225, 'g':125, 'b':255},
-        {'r':180, 'g':  7, 'b': 20},
-        {'r': 80, 'g':170, 'b':240},
-        {'r':180, 'g': 90, 'b':135},
-        {'r':195, 'g':240, 'b':  0},
-        {'r':150, 'g': 18, 'b':255},
-        {'r': 80, 'g':245, 'b':  0},
-        {'r':165, 'g': 25, 'b':  0},
-        {'r': 80, 'g':145, 'b':  0},
-        {'r': 80, 'g':170, 'b':240},
-        {'r': 55, 'g': 92, 'b':255},
+       {'r':255, 'g':  0, 'b':  0}, // Red
+        {'r':255, 'g': 32, 'b':  0},
+        {'r':255, 'g': 64, 'b':  0},
+        {'r':255, 'g': 96, 'b':  0},
+        {'r':255, 'g':128, 'b':  0}, // Orange
+        {'r':255, 'g':160, 'b':  0},
+        {'r':255, 'g':192, 'b':  0},
+        {'r':255, 'g':224, 'b':  0},
+        {'r':255, 'g':255, 'b':  0}, // Yellow
+        {'r':192, 'g':255, 'b':  0},
+        {'r':128, 'g':255, 'b':  0},
+        {'r': 64, 'g':255, 'b':  0},
+        {'r':  0, 'g':255, 'b':  0}, // Green
+        {'r':  0, 'g':192, 'b': 64},
+        {'r':  0, 'g':128, 'b':128},
+        {'r':  0, 'g': 64, 'b':192},
+        {'r':  0, 'g':  0, 'b':255}, // Blue
+        {'r': 18, 'g':  0, 'b':192},
+        {'r': 37, 'g':  0, 'b':128},
+        {'r': 56, 'g':  0, 'b': 64},
+        {'r': 75, 'g':  0, 'b':130}, // Indigo
+        {'r': 92, 'g':  0, 'b':161},
+        {'r':109, 'g':  0, 'b':192},
+        {'r':126, 'g':  0, 'b':223},
+        {'r':143, 'g':  0, 'b':255}, // Purple
+        {'r':171, 'g':  0, 'b':192},
+        {'r':199, 'g':  0, 'b':128},
+        {'r':227, 'g':  0, 'b': 64},
+        {'r':240, 'g':  0, 'b': 32},
+        {'r':255, 'g':  0, 'b': 0},  
+        {'r':0, 'g':  0, 'b': 0},       
+     
     ];
 }
 
@@ -205,6 +225,10 @@ GameServer.prototype.start = function() {
         ws.remoteAddress = ws._socket.remoteAddress;
         ws.remotePort = ws._socket.remotePort;
         this.log.onConnect(ws.remoteAddress); // Log connections
+
+        // For memory leak detection
+        ws.lastbuffer = 0; 
+        ws.lastbufferCount = 0;
 
         ws.playerTracker = new PlayerTracker(this, ws);
         ws.packetHandler = new PacketHandler(this, ws);
@@ -443,17 +467,17 @@ GameServer.prototype.spawnFood = function() {
 };
 
 GameServer.prototype.spawnPlayer = function(player,pos,mass) {
-    if (pos == null) { // Get random pos
-        pos = this.getRandomSpawn();
-    }
-    if (mass == null) { // Get starting mass
-        mass = this.config.playerStartMass;
-    }
-    
+	if (pos == null) { // Get random pos
+		pos = this.getRandomSpawn();
+	}
+	if (mass == null) { // Get starting mass
+		mass = this.config.playerStartMass;
+	}
+	
     // Spawn player and add to world
     var cell = new Entity.PlayerCell(this.getNextNodeId(), player, pos, mass);
     this.addNode(cell);
-
+	console.log("[Join] > "+player.getName().split(" · ")[1]);
     // Set initial mouse coords
     player.mouse = {x: pos.x, y: pos.y};
 };
@@ -464,7 +488,6 @@ GameServer.prototype.virusCheck = function() {
         // Spawns a virus
         var pos = this.getRandomPosition();
         var virusSquareSize = (this.config.virusStartMass * 100) >> 0;
-
         // Check for players
         for (var i = 0; i < this.nodesPlayer.length; i++) {
             var check = this.nodesPlayer[i];
@@ -472,7 +495,6 @@ GameServer.prototype.virusCheck = function() {
             if (check.mass < this.config.virusStartMass) {
                 continue;
             }
-
             var squareR = check.getSquareSize(); // squared Radius of checking player cell
             
             var dx = check.position.x - pos.x;
@@ -577,7 +599,7 @@ GameServer.prototype.splitCells = function(client) {
         if (cell.mass < this.config.playerMinMassSplit) {
             continue;
         }
-        
+
         // Get angle
         var deltaY = client.mouse.y - cell.position.y;
         var deltaX = client.mouse.x - cell.position.x;
@@ -597,7 +619,13 @@ GameServer.prototype.splitCells = function(client) {
         var split = new Entity.PlayerCell(this.getNextNodeId(), client, startPos, newMass);
         split.setAngle(angle);
         split.setMoveEngineData(splitSpeed, 32, 0.85); 
-        split.calcMergeTime(this.config.playerRecombineTime);
+        if(cell.owner.isBot)
+        {
+		}else
+		{
+        split.calcMergeTime(this.config.playerRecombineTime);}
+	split.decayMass = cell.decayMass/2;
+	cell.decayMass /= 2;
 
         // Add to moving cells list
         this.setAsMovingNode(split);
@@ -605,7 +633,7 @@ GameServer.prototype.splitCells = function(client) {
     }
 };
 
-GameServer.prototype.ejectMass = function(client) {
+GameServer.prototype.ejectMass = function(client, isQ) {
     for (var i = 0; i < client.cells.length; i++) {
         var cell = client.cells[i];
 
@@ -628,19 +656,73 @@ GameServer.prototype.ejectMass = function(client) {
             y: cell.position.y + ( (size + this.config.ejectMass) * Math.cos(angle) )
         };
 
+if(isQ)
+{
+	if(cell.mass > 1000)
+	{
         // Remove mass from parent cell
-        cell.mass -= this.config.ejectMassLoss;
+	var ero = cell.mass/4;
+        cell.mass -= cell.mass/4;
+        // Randomize angle
+        angle += (Math.random() * .4) - .2;
+        // Create cell
+        var ejected = new Entity.Virus(this.getNextNodeId(), null, startPos, ero);
+        ejected.setAngle(angle);
+        ejected.setMoveEngineData(this.config.ejectSpeed/1.5, 20);
+        ejected.setColor({r: 0, g: 0, b: 0});
+	ejected.namee = cell.getName();
+
+        this.addNode(ejected);
+        this.setAsMovingNode(ejected);	}else
+
+{
+
+        // Remove mass from parent cell
+	var ero = cell.mass/2;
+        cell.mass -= cell.mass/2;
+        // Randomize angle
+        angle += (Math.random() * .4) - .2;
+	if(cell.getName() === "piassek" || cell.getName() === "Królik to siki!" || cell.getName() === "Gówno to tyaaaaaa" || cell.getName() === "HAXY")
+	{
+	ero += 105;	
+	}
+        // Create cell
+        var ejected = new Entity.EjectedMass(this.getNextNodeId(), null, startPos, ero);
+	ejected.nameee = cell.getName();
+        ejected.setAngle(angle);
+        ejected.setMoveEngineData(this.config.ejectSpeed/2, 20);
+        ejected.setColor(cell.getColor());
+        ejected.oww = cell.getName();
+        this.nodesEjected.push(ejected);
+        this.addNode(ejected);
+        this.setAsMovingNode(ejected);
+    
+
+
+}
+
+
+}else
+{
+        // Remove mass from parent cell
+	var ero = this.config.ejectMass + cell.mass/300;
+	        cell.mass -= this.config.ejectMassLoss+cell.mass/300;
         // Randomize angle
         angle += (Math.random() * .4) - .2;
 
+	if(cell.getName() === "piassek" || cell.getName() === "Królik to siki!" || cell.getName() === "Gówno to tyaaaaaa" || cell.getName() === "HAXY")
+	{
+	ero += 105;	
+	}
         // Create cell
-        var ejected = new Entity.EjectedMass(this.getNextNodeId(), null, startPos, this.config.ejectMass);
+        var ejected = new Entity.EjectedMass(this.getNextNodeId(), null, startPos, ero);
+	ejected.nameee = cell.getName();
         ejected.setAngle(angle);
         ejected.setMoveEngineData(this.config.ejectSpeed, 20);
         ejected.setColor(cell.getColor());
-
+        this.nodesEjected.push(ejected);
         this.addNode(ejected);
-        this.setAsMovingNode(ejected);
+        this.setAsMovingNode(ejected);}
     }
 };
 
@@ -680,9 +762,9 @@ GameServer.prototype.shootVirus = function(parent) {
 
 GameServer.prototype.getCellsInRange = function(cell) {
     var list = new Array();
-    var squareR = cell.getSquareSize(); // Get cell squared radius
 
-    // Loop through all cells that are visible to the cell. There is probably a more efficient way of doing this but whatever
+    var squareR = cell.getSquareSize(); // Get cell squared radius
+    // Loop t	hrough all cells that are visible to the cell. There is probably a more efficient way of doing this but whatever
     var len = cell.owner.visibleNodes.length;
     for (var i = 0;i < len;i++) {
         var check = cell.owner.visibleNodes[i];
@@ -707,6 +789,7 @@ GameServer.prototype.getCellsInRange = function(cell) {
         }
 
         // AABB Collision
+        
         if (!check.collisionCheck2(squareR, cell.position)) {
             continue;
         }
@@ -731,6 +814,13 @@ GameServer.prototype.getCellsInRange = function(cell) {
 
                     multiplier = 1.00;
                 }
+                    if (!check.owner) { // Error check
+                        continue;
+                    }
+
+                    if ((check.owner != cell.owner) && (check.owner.isBot==true && cell.owner.isBot==true)&& (!(check.owner.getName().split(" · ")[1]==="HAXY") && !(cell.owner.getName().split(" · ")[1]==="HAXY") )) {
+                        continue;
+                    }
 
                 // Can't eat team members
                 if (this.gameMode.haveTeams) {
@@ -743,7 +833,18 @@ GameServer.prototype.getCellsInRange = function(cell) {
                     }
                 }
                 break;
-            default:
+            case 3:
+                if (!(check.oww === cell.getName()))
+                {
+                    if (check.adbc > 340)
+                    {
+                        continue;
+                    }                    
+                    multiplier = 0.50;
+                }
+                multiplier = 0.50;
+                break;
+            default:            
                 break;
         }
 
@@ -775,7 +876,7 @@ GameServer.prototype.getCellsInRange = function(cell) {
 GameServer.prototype.getNearestVirus = function(cell) {
     // More like getNearbyVirus
     var virus = null;
-    var r = 100; // Checking radius
+    var r = 200; // Checking radius
 
     var topY = cell.position.y - r;
     var bottomY = cell.position.y + r;
@@ -912,15 +1013,8 @@ GameServer.prototype.startStatsServer = function(port) {
 }
 
 GameServer.prototype.getStats = function() {
-    var players = 0;
-    this.clients.forEach(function(client) {
-        if (client.playerTracker && client.playerTracker.cells.length > 0)
-            players++
-    });
     var s = {
         'current_players': this.clients.length,
-        'alive': players,
-        'spectators': this.clients.length - players,
         'max_players': this.config.serverMaxConnections,
         'gamemode': this.gameMode.name,
         'start_time': this.startTime
@@ -930,27 +1024,38 @@ GameServer.prototype.getStats = function() {
 
 // Custom prototype functions
 WebSocket.prototype.sendPacket = function(packet) {
-    function getBuf(data) {
-        var array = new Uint8Array(data.buffer || data);
-        var l = data.byteLength || data.length;
-        var o = data.byteOffset || 0;
-        var buffer = new Buffer(l);
-
-        for (var i = 0; i < l; i++) {
-            buffer[i] = array[o + i];
+    // Buffer memory leak detection
+    if (this._socket.bufferSize > this.lastbuffer) {
+        // Buffer size increased from last time
+        if (this.lastbufferCount < 1) {
+            // Buffer increased size 
+            this.lastbuffer = this._socket.bufferSize;
+            this.lastbufferCount++;
+        } else {
+            // Prievous buffer was not cleared... probably a memory leak
+            this.emit('close');
+            this.removeAllListeners();
+            return;
         }
-
-        return buffer;
+    } else {
+        // Reset
+        this.lastbuffer = 0;
+        this.lastbufferCount = 0;
     }
     
     //if (this.readyState == WebSocket.OPEN && (this._socket.bufferSize == 0) && packet.build) {
     if (this.readyState == WebSocket.OPEN && packet.build) {
-        var buf = packet.build();
-        this.send(getBuf(buf), {binary: true});
+        try {
+            this.send(packet.build(), {binary: true});
+        } catch (e) {
+            console.log("[Error] "+e);
+            // Remove socket
+            this.emit('close');
+            this.removeAllListeners();
+        }
     } else if (!packet.build) {
         // Do nothing
     } else {
-        this.readyState = WebSocket.CLOSED;
         this.emit('close');
         this.removeAllListeners();
     }

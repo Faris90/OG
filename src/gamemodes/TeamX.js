@@ -152,8 +152,7 @@ TeamX.prototype.onServerInit = function (gameServer) {
 
         gameServer.getCellsInRange = function (cell) {
             var list = new Array();
-            var squareR = cell.getSquareSize(); // Get cell squared radius
-            
+            var squareR = cell.getSquareSize(); // Get cell squared radius             
             // Loop through all cells that are visible to the cell. There is probably a more efficient way of doing this but whatever
             var len = cell.owner.visibleNodes.length;
             for (var i = 0; i < len; i++) {
@@ -179,7 +178,7 @@ TeamX.prototype.onServerInit = function (gameServer) {
                 }
                 
                 // AABB Collision
-                if (!check.collisionCheck2(squareR, cell.position)) {
+                if (!check.collisionCheck2(squareR, cell.position)) { 
                     continue;
                 }
                 

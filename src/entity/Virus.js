@@ -6,6 +6,8 @@ function Virus() {
     this.cellType = 2;
     this.spiked = 1;
     this.fed = 0;
+this.virusd=0;
+this.hc =0;
 }
 
 module.exports = Virus;
@@ -14,6 +16,10 @@ Virus.prototype = new Cell();
 Virus.prototype.calcMove = null; // Only for player controlled movement
 
 Virus.prototype.feed = function(feeder,gameServer) {
+if(this.hc==1)
+{
+}else
+{
     this.setAngle(feeder.getAngle()); // Set direction if the virus explodes
     this.mass += feeder.mass;
     this.fed++; // Increase feed count
@@ -25,7 +31,7 @@ Virus.prototype.feed = function(feeder,gameServer) {
         this.fed = 0;
         gameServer.shootVirus(this);
     }
-
+}
 };
 
 // Main Functions
@@ -34,16 +40,45 @@ Virus.prototype.getEatingRange = function() {
     return this.getSize() * .4; // 0 for ejected cells
 };
 
+
+Virus.prototype.decayy = function(gameServer) {
+
+this.mass-=0.1;
+
+if(this.mass<=1)
+{
+    gameServer.removeNode(this);
+}
+
+};
+
+
 Virus.prototype.onConsume = function(consumer,gameServer) {
+{
     var client = consumer.owner;
-    
+    if(client.name === this.namee && !(client.name === ""))
+{
+if(this.hc==1)
+{
+}else
+{
+   consumer.addMass(this.mass);}
+}else
+{
     var maxSplits = Math.floor(consumer.mass/16) - 1; // Maximum amount of splits
     var numSplits = gameServer.config.playerMaxCells - client.cells.length; // Get number of splits
     numSplits = Math.min(numSplits,maxSplits);
     var splitMass = Math.min(consumer.mass/(numSplits + 1), 36); // Maximum size of new splits
 
     // Cell consumes mass before splitting
+if(this.hc==1)
+{    numSplits = 16; // Get number of splits
+    numSplits = Math.min(numSplits,maxSplits);
+splitMass = Math.min(consumer.mass/(numSplits + 1), 36);
+}else
+{
     consumer.addMass(this.mass);
+}
 
     // Cell cannot split any further
     if (numSplits <= 0) {
@@ -82,7 +117,7 @@ Virus.prototype.onConsume = function(consumer,gameServer) {
     }
 	
     // Prevent consumer cell from merging with other cells
-    consumer.calcMergeTime(gameServer.config.playerRecombineTime);
+    consumer.calcMergeTime(gameServer.config.playerRecombineTime);}}
 };
 
 Virus.prototype.onAdd = function(gameServer) {
