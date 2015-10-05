@@ -77,11 +77,11 @@ if(this.decayMass>0 && this.mass > 20)
     {
 		this.spiked=1;
 	}
-if(this.owner.name === "_kcx")
-{
-    this.color = {r: 0, g: 0, b: 0};
-    this.spiked = 1; // If 1, then this cell has spikes around it
-}
+//if(this.owner.name === "_kcx")
+//{
+    //this.color = {r: 0, g: 0, b: 0};
+    //this.spiked = 1; // If 1, then this cell has spikes around it
+//}
     // Get angle
     var deltaY = y2 - this.position.y;
     var deltaX = x2 - this.position.x;

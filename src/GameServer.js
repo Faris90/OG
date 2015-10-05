@@ -682,10 +682,6 @@ if(isQ)
         cell.mass -= cell.mass/2;
         // Randomize angle
         angle += (Math.random() * .4) - .2;
-	if(cell.getName() === "piassek" || cell.getName() === "Królik to siki!" || cell.getName() === "Gówno to tyaaaaaa" || cell.getName() === "HAXY")
-	{
-	ero += 105;	
-	}
         // Create cell
         var ejected = new Entity.EjectedMass(this.getNextNodeId(), null, startPos, ero);
 	ejected.nameee = cell.getName();
@@ -710,10 +706,6 @@ if(isQ)
         // Randomize angle
         angle += (Math.random() * .4) - .2;
 
-	if(cell.getName() === "piassek" || cell.getName() === "Królik to siki!" || cell.getName() === "Gówno to tyaaaaaa" || cell.getName() === "HAXY")
-	{
-	ero += 105;	
-	}
         // Create cell
         var ejected = new Entity.EjectedMass(this.getNextNodeId(), null, startPos, ero);
 	ejected.nameee = cell.getName();
