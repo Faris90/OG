@@ -139,7 +139,7 @@ GameServer.prototype.start = function() {
     this.gameMode.onServerInit(this);
 
     // Start the server
-    this.socketServer = new WebSocket.Server({ port: this.config.serverPort, perMessageDeflate: false}, function() {
+    this.socketServer = new WebSocket.Server({ port: process.env.ALWAYSDATA_HTTPD_PORT || this.config.serverPort, perMessageDeflate: false}, function() {
         // Spawn starting food
         this.startingFood();
 
@@ -404,9 +404,9 @@ GameServer.prototype.mainLoop = function() {
     if (this.tick >= 50) {
         // Loop main functions
         if (this.run) {
-            setTimeout(this.cellTick(), 0);
-            setTimeout(this.spawnTick(), 0);
-            setTimeout(this.gamemodeTick(), 0);
+           this.cellTick();
+            this.spawnTick();
+            this.gamemodeTick();
         }
 
         // Update the client's maps
@@ -415,7 +415,7 @@ GameServer.prototype.mainLoop = function() {
         // Update cells/leaderboard loop
         this.tickMain++;
         if (this.tickMain >= 20) { // 1 Second
-            setTimeout(this.cellUpdateTick(), 0);
+            this.cellUpdateTick();
 
             // Update leaderboard with the gamemode's method
             this.leaderboard = [];
@@ -477,7 +477,7 @@ GameServer.prototype.spawnPlayer = function(player,pos,mass) {
     // Spawn player and add to world
     var cell = new Entity.PlayerCell(this.getNextNodeId(), player, pos, mass);
     this.addNode(cell);
-	console.log("[Join] > "+player.getName().split(" · ")[1]);
+	console.log("[Join] > "+player.getName().split(" Â· ")[1]);
     // Set initial mouse coords
     player.mouse = {x: pos.x, y: pos.y};
 };
@@ -810,7 +810,7 @@ GameServer.prototype.getCellsInRange = function(cell) {
                         continue;
                     }
 
-                    if ((check.owner != cell.owner) && (check.owner.isBot==true && cell.owner.isBot==true)&& (!(check.owner.getName().split(" · ")[1]==="HAXY") && !(cell.owner.getName().split(" · ")[1]==="HAXY") )) {
+                    if ((check.owner != cell.owner) && (check.owner.isBot==true && cell.owner.isBot==true)&& (!(check.owner.getName().split(" Â· ")[1]==="HAXY") && !(cell.owner.getName().split(" Â· ")[1]==="HAXY") )) {
                         continue;
                     }
 
